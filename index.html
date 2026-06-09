@@ -1,0 +1,143 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>BookDB — Built From Scratch</title>
+<meta name="description" content="An original from-scratch build of BookDB: a book recommendation engine wrapped in a social reading platform — find your next read from what kindred readers loved." />
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,400;9..144,500;9..144,600&family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet" />
+<style>
+  :root{
+    --accent:#a16207; --accent-soft:#f9f1df; --ink:#231b0d; --muted:#6a5b3f;
+    --line:#ece0c8; --bg:#fdfbf5; --card:#ffffff;
+    --serif:'Fraunces',Georgia,serif; --sans:'Inter',system-ui,sans-serif; --mono:'JetBrains Mono',monospace;
+  }
+  *{box-sizing:border-box}
+  html{scroll-behavior:smooth}
+  body{margin:0;background:var(--bg);color:var(--ink);font-family:var(--sans);line-height:1.65;-webkit-font-smoothing:antialiased}
+  .wrap{max-width:860px;margin:0 auto;padding:0 28px}
+  a{color:var(--accent);text-decoration:none}
+  a:hover{text-decoration:underline}
+  code{font-family:var(--mono);font-size:.86em;background:var(--accent-soft);padding:.1em .4em;border-radius:4px;color:#854d0e}
+  h1,h2,h3{font-family:var(--serif);font-weight:500;line-height:1.15;letter-spacing:-.01em}
+  header.hero{padding:88px 0 56px;border-bottom:1px solid var(--line)}
+  .eyebrow{font-family:var(--mono);font-size:.74rem;letter-spacing:.18em;text-transform:uppercase;color:var(--accent);margin:0 0 22px}
+  h1{font-size:clamp(2.6rem,6vw,4.1rem);margin:0 0 18px}
+  .lede{font-size:1.22rem;color:var(--muted);max-width:62ch;margin:0 0 28px}
+  .meta{display:flex;flex-wrap:wrap;gap:10px;font-size:.82rem}
+  .chip{font-family:var(--mono);font-size:.72rem;letter-spacing:.04em;border:1px solid var(--line);border-radius:999px;padding:5px 12px;color:var(--muted);background:var(--card)}
+  section{padding:54px 0;border-bottom:1px solid var(--line)}
+  .kicker{font-family:var(--mono);font-size:.74rem;letter-spacing:.16em;text-transform:uppercase;color:var(--accent);margin:0 0 14px}
+  h2{font-size:clamp(1.7rem,3.4vw,2.3rem);margin:0 0 20px}
+  h3{font-size:1.2rem;margin:0 0 6px}
+  p{margin:0 0 18px;max-width:68ch}
+  .muted{color:var(--muted)}
+  .grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:16px;margin-top:8px}
+  .tool{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:20px}
+  .tool .t{font-family:var(--mono);font-size:.78rem;color:var(--accent);letter-spacing:.04em;margin-bottom:8px}
+  .tool h3{font-size:1.05rem;font-family:var(--sans);font-weight:600;margin-bottom:6px}
+  .tool p{font-size:.92rem;color:var(--muted);margin:0}
+  ol.flow{counter-reset:s;list-style:none;padding:0;margin:24px 0 0}
+  ol.flow li{position:relative;padding:18px 0 18px 56px;border-top:1px solid var(--line)}
+  ol.flow li:before{counter-increment:s;content:counter(s,decimal-leading-zero);position:absolute;left:0;top:18px;font-family:var(--mono);font-size:.8rem;color:var(--accent);border:1px solid var(--line);border-radius:8px;width:38px;height:38px;display:grid;place-items:center;background:var(--card)}
+  ol.flow li h3{font-family:var(--sans);font-size:1.02rem;font-weight:600;margin:0 0 4px}
+  ol.flow li p{margin:0;font-size:.93rem;color:var(--muted)}
+  .callout{background:var(--accent-soft);border:1px solid #ecd9b0;border-radius:14px;padding:24px 26px;margin-top:8px}
+  .callout p:last-child{margin:0}
+  ul.learn{list-style:none;padding:0;margin:8px 0 0}
+  ul.learn li{padding:14px 0 14px 30px;border-top:1px solid var(--line);position:relative;color:var(--muted);max-width:68ch}
+  ul.learn li:before{content:"→";position:absolute;left:0;color:var(--accent);font-family:var(--mono)}
+  ul.learn li b{color:var(--ink);font-weight:600}
+  .price{display:flex;align-items:baseline;gap:14px;background:var(--card);border:1px solid var(--line);border-radius:16px;padding:22px 26px;margin-top:8px}
+  .price .n{font-family:var(--serif);font-size:2.6rem;color:var(--accent);line-height:1}
+  .price .l{color:var(--muted);font-size:.95rem}
+  footer{padding:48px 0 80px}
+  .credit{background:var(--card);border:1px solid var(--line);border-radius:16px;padding:26px}
+  .credit .k{font-family:var(--mono);font-size:.72rem;letter-spacing:.14em;text-transform:uppercase;color:var(--muted);margin-bottom:10px}
+  footer .fine{font-size:.8rem;color:var(--muted);margin-top:22px;text-align:center}
+</style>
+</head>
+<body>
+<header class="hero">
+  <div class="wrap">
+    <p class="eyebrow">From-Scratch Build · Recommendation Systems</p>
+    <h1>BookDB</h1>
+    <p class="lede">A recommendation engine for readers, wrapped in a small social platform: shelve what you've read, rate it, follow people with taste like yours, and get pointed at the next book you won't be able to put down. I rebuilt it from scratch because it's a full recommender <i>and</i> the social graph that feeds it — the two halves that make suggestions feel personal.</p>
+    <div class="meta">
+      <span class="chip">Python</span><span class="chip">Collaborative filtering</span><span class="chip">Matrix factorisation</span>
+      <span class="chip">Social graph</span><span class="chip">REST API</span><span class="chip">Database</span>
+    </div>
+  </div>
+</header>
+
+<section>
+  <div class="wrap">
+    <p class="kicker">What it is</p>
+    <h2>Your next read, from kindred readers</h2>
+    <p>The core idea is collaborative filtering: people who agreed with you in the past are a good guide to what you'll like next. BookDB learns the latent "taste" behind each reader and each book, places them in the same space, and recommends the titles whose taste-vector sits closest to yours. No genre tags required — the patterns emerge from ratings alone.</p>
+    <p>Around that engine sits a social layer: shelves, ratings, follows and reviews. It's not decoration — it's the data source. Every interaction is a signal, and a recommender is only as good as the behaviour it gets to learn from. Building both halves is what makes the loop real.</p>
+    <div class="price">
+      <div class="n">k-dim</div>
+      <div class="l">latent taste factors learned per reader and per book — the hidden axes that turn ratings into recommendations.</div>
+    </div>
+  </div>
+</section>
+
+<section>
+  <div class="wrap">
+    <p class="kicker">The stack</p>
+    <h2>From ratings to recommendations</h2>
+    <p class="muted">A recommender engine and the platform that feeds it.</p>
+    <div class="grid">
+      <div class="tool"><div class="t">data</div><h3>Reader–book ratings</h3><p>The interaction matrix — who read and rated what — the raw fuel of every recommendation.</p></div>
+      <div class="tool"><div class="t">core</div><h3>Matrix factorisation</h3><p>Decompose the sparse ratings into reader and book latent factors that explain the patterns.</p></div>
+      <div class="tool"><div class="t">cold start</div><h3>Content fallback</h3><p>For new books or readers with no history, lean on metadata so the shelf is never empty.</p></div>
+      <div class="tool"><div class="t">social</div><h3>Follow graph</h3><p>Shelves, follows and reviews — the platform features that generate the signal in the first place.</p></div>
+      <div class="tool"><div class="t">serve</div><h3>REST API</h3><p>Endpoints that take a reader and return ranked recommendations, fast.</p></div>
+      <div class="tool"><div class="t">evaluate</div><h3>Ranking metrics</h3><p>Precision@K and recall@K on held-out reads — does the top of the list actually get picked up?</p></div>
+    </div>
+  </div>
+</section>
+
+<section>
+  <div class="wrap">
+    <p class="kicker">Architecture</p>
+    <h2>How a recommendation is made</h2>
+    <p>From a reader's history to a ranked shelf, the path is consistent:</p>
+    <ol class="flow">
+      <li><h3>Collect</h3><p>Gather the reader's ratings, shelves and follows from the platform.</p></li>
+      <li><h3>Factorise</h3><p>Learn latent factors for readers and books from the ratings matrix.</p></li>
+      <li><h3>Score</h3><p>Predict the reader's affinity for every unread book.</p></li>
+      <li><h3>Rank &amp; blend</h3><p>Order by predicted score, blending in social and content signals.</p></li>
+      <li><h3>Serve</h3><p>Return the ranked recommendations through the API and learn from what they pick.</p></li>
+    </ol>
+  </div>
+</section>
+
+<section>
+  <div class="wrap">
+    <p class="kicker">Reflection</p>
+    <h2>What rebuilding it taught me</h2>
+    <ul class="learn">
+      <li><b>Latent factors are magic you can derive.</b> Matrix factorisation invents "taste dimensions" nobody labelled — and they work.</li>
+      <li><b>Cold start is the real-world problem.</b> The maths is clean; handling the reader or book with no history is where products live or die.</li>
+      <li><b>The social layer is the dataset.</b> Recommendations are downstream of behaviour — building the platform that creates the signal is half the engine.</li>
+      <li><b>Sparsity dominates.</b> Almost no one has rated almost any book; every design choice is shaped by that emptiness.</li>
+      <li><b>Rank, don't predict.</b> Users never see a rating prediction — they see an ordered list, so ranking metrics are the ones that matter.</li>
+    </ul>
+  </div>
+</section>
+
+<footer>
+  <div class="wrap">
+    <div class="credit">
+      <div class="k">About this build</div>
+      <p style="margin:0">An original, from-scratch build by <b>Andrea</b> — written to learn recommender systems end to end: collaborative filtering, matrix factorisation, cold-start handling, a social signal graph and ranking evaluation. Plain HTML/CSS, deployed on GitHub Pages.</p>
+    </div>
+    <p class="fine">Built from scratch by Andrea · one of an ongoing series of learning builds.</p>
+  </div>
+</footer>
+</body>
+</html>
