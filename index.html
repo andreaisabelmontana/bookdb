@@ -64,10 +64,10 @@
   <div class="wrap">
     <p class="eyebrow">From-Scratch Build · Recommendation Systems</p>
     <h1>BookDB</h1>
-    <p class="lede">A recommendation engine for readers, wrapped in a small social platform: shelve what you've read, rate it, follow people with taste like yours, and get pointed at the next book you won't be able to put down. I rebuilt it from scratch because it's a full recommender <i>and</i> the social graph that feeds it — the two halves that make suggestions feel personal.</p>
+    <p class="lede">A book recommendation engine wrapped in a small social reading platform: shelve what you've read, rate it, find readers with taste like yours, and get pointed at your next book from what they loved. I built both halves from scratch — neighborhood collaborative filtering, and the SQLite store that feeds it.</p>
     <div class="meta">
-      <span class="chip">Python</span><span class="chip">Collaborative filtering</span><span class="chip">Matrix factorisation</span>
-      <span class="chip">Social graph</span><span class="chip">REST API</span><span class="chip">Database</span>
+      <span class="chip">Python</span><span class="chip">Collaborative filtering</span><span class="chip">Cosine similarity</span>
+      <span class="chip">scikit-learn</span><span class="chip">SQLite</span><span class="chip">Recall@K eval</span>
     </div>
   </div>
 </header>
@@ -76,11 +76,11 @@
   <div class="wrap">
     <p class="kicker">What it is</p>
     <h2>Your next read, from kindred readers</h2>
-    <p>The core idea is collaborative filtering: people who agreed with you in the past are a good guide to what you'll like next. BookDB learns the latent "taste" behind each reader and each book, places them in the same space, and recommends the titles whose taste-vector sits closest to yours. No genre tags required — the patterns emerge from ratings alone.</p>
-    <p>Around that engine sits a social layer: shelves, ratings, follows and reviews. It's not decoration — it's the data source. Every interaction is a signal, and a recommender is only as good as the behaviour it gets to learn from. Building both halves is what makes the loop real.</p>
+    <p>The core idea is collaborative filtering: people who agreed with you in the past are a good guide to what you'll like next. BookDB measures taste similarity between readers with <b>cosine similarity</b> on their mean-centered rating vectors, picks your nearest neighbours — your <i>kindred readers</i> — and recommends the books they loved that you haven't read. No genre tags required; the patterns emerge from ratings alone.</p>
+    <p>There's an item-based view too: <b>adjusted-cosine</b> similarity between books, so titles that get loved together (the "co-loved" blocks) surface together. Around the engine sits the platform — a SQLite store of users, books, ratings and shelves — because a recommender is only as good as the behaviour it learns from.</p>
     <div class="price">
-      <div class="n">k-dim</div>
-      <div class="l">latent taste factors learned per reader and per book — the hidden axes that turn ratings into recommendations.</div>
+      <div class="n">5.9×</div>
+      <div class="l">item-based CF recovers a held-out liked book 5.9× as often as the popularity baseline at K=10 (Recall@10 0.560 vs 0.095, leave-one-out over 200 readers).</div>
     </div>
   </div>
 </section>
@@ -91,12 +91,12 @@
     <h2>From ratings to recommendations</h2>
     <p class="muted">A recommender engine and the platform that feeds it.</p>
     <div class="grid">
-      <div class="tool"><div class="t">data</div><h3>Reader–book ratings</h3><p>The interaction matrix — who read and rated what — the raw fuel of every recommendation.</p></div>
-      <div class="tool"><div class="t">core</div><h3>Matrix factorisation</h3><p>Decompose the sparse ratings into reader and book latent factors that explain the patterns.</p></div>
-      <div class="tool"><div class="t">cold start</div><h3>Content fallback</h3><p>For new books or readers with no history, lean on metadata so the shelf is never empty.</p></div>
-      <div class="tool"><div class="t">social</div><h3>Follow graph</h3><p>Shelves, follows and reviews — the platform features that generate the signal in the first place.</p></div>
-      <div class="tool"><div class="t">serve</div><h3>REST API</h3><p>Endpoints that take a reader and return ranked recommendations, fast.</p></div>
-      <div class="tool"><div class="t">evaluate</div><h3>Ranking metrics</h3><p>Precision@K and recall@K on held-out reads — does the top of the list actually get picked up?</p></div>
+      <div class="tool"><div class="t">data</div><h3>Reader–book ratings</h3><p>A sparse user×book matrix (200×120, 14.6% dense) — who read and rated what, the raw fuel of every recommendation.</p></div>
+      <div class="tool"><div class="t">core · users</div><h3>User-based CF</h3><p>Cosine similarity on mean-centered rows finds your kindred readers; their ratings, weighted by similarity, score your unread books.</p></div>
+      <div class="tool"><div class="t">core · items</div><h3>Item-based CF</h3><p>Adjusted-cosine between book columns ranks co-loved titles together — books the same readers rate highly.</p></div>
+      <div class="tool"><div class="t">baseline</div><h3>Popularity</h3><p>A count-damped mean rating, non-personalized — the bar collaborative filtering has to clear.</p></div>
+      <div class="tool"><div class="t">platform</div><h3>SQLite store + API</h3><p>Users, books, ratings and shelves behind a clean Python API: recommend_for, kindred_readers, add_rating.</p></div>
+      <div class="tool"><div class="t">evaluate</div><h3>Recall@K</h3><p>Leave-one-out HitRate@K and Recall@K on held-out reads — does the top of the list actually get picked up?</p></div>
     </div>
   </div>
 </section>
@@ -107,11 +107,11 @@
     <h2>How a recommendation is made</h2>
     <p>From a reader's history to a ranked shelf, the path is consistent:</p>
     <ol class="flow">
-      <li><h3>Collect</h3><p>Gather the reader's ratings, shelves and follows from the platform.</p></li>
-      <li><h3>Factorise</h3><p>Learn latent factors for readers and books from the ratings matrix.</p></li>
-      <li><h3>Score</h3><p>Predict the reader's affinity for every unread book.</p></li>
-      <li><h3>Rank &amp; blend</h3><p>Order by predicted score, blending in social and content signals.</p></li>
-      <li><h3>Serve</h3><p>Return the ranked recommendations through the API and learn from what they pick.</p></li>
+      <li><h3>Collect</h3><p>Pull the reader's ratings and shelves from the SQLite platform into a sparse user×book matrix.</p></li>
+      <li><h3>Find neighbours</h3><p>Cosine similarity (mean-centered) ranks the reader's kindred readers — or the adjusted-cosine neighbours of each book.</p></li>
+      <li><h3>Score</h3><p>Similarity-weighted average of how neighbours rated each book gives a predicted score for every unread title.</p></li>
+      <li><h3>Rank &amp; filter</h3><p>Order by score, drop already-read books, drop thinly-supported ones; cold-start readers fall back to popularity.</p></li>
+      <li><h3>Evaluate</h3><p>Leave-one-out Recall@K confirms the ranking recovers held-out reads far more often than the baseline.</p></li>
     </ol>
   </div>
 </section>
@@ -121,11 +121,11 @@
     <p class="kicker">Reflection</p>
     <h2>What rebuilding it taught me</h2>
     <ul class="learn">
-      <li><b>Latent factors are magic you can derive.</b> Matrix factorisation invents "taste dimensions" nobody labelled — and they work.</li>
-      <li><b>Cold start is the real-world problem.</b> The maths is clean; handling the reader or book with no history is where products live or die.</li>
-      <li><b>The social layer is the dataset.</b> Recommendations are downstream of behaviour — building the platform that creates the signal is half the engine.</li>
-      <li><b>Sparsity dominates.</b> Almost no one has rated almost any book; every design choice is shaped by that emptiness.</li>
-      <li><b>Rank, don't predict.</b> Users never see a rating prediction — they see an ordered list, so ranking metrics are the ones that matter.</li>
+      <li><b>Mean-centering is what makes cosine "taste".</b> Without it, similarity tracks how generously someone rates, not what they like — centering fixes the harsh-vs-generous bias.</li>
+      <li><b>Adjusted cosine matters for items.</b> Raw cosine made oppositely-loved books look similar; centering book columns lets anti-correlated titles take a negative similarity, and item-based Recall@10 jumped.</li>
+      <li><b>One noisy neighbour can wreck a list.</b> Requiring a minimum number of neighbours to support a book stabilised user-based CF across neighbourhood sizes.</li>
+      <li><b>The platform is the dataset.</b> Recommendations are downstream of behaviour — building the SQLite store that creates the signal is half the engine.</li>
+      <li><b>Rank, don't predict.</b> Readers never see a rating prediction — they see an ordered list, so Recall@K, not error, is the metric that counts.</li>
     </ul>
   </div>
 </section>
@@ -134,7 +134,7 @@
   <div class="wrap">
     <div class="credit">
       <div class="k">About this build</div>
-      <p style="margin:0">An original, from-scratch build by <b>Andrea</b> — written to learn recommender systems end to end: collaborative filtering, matrix factorisation, cold-start handling, a social signal graph and ranking evaluation. Plain HTML/CSS, deployed on GitHub Pages.</p>
+      <p style="margin:0">An original, from-scratch build by <b>Andrea</b> — written to learn recommender systems end to end: user-based and item-based collaborative filtering with cosine similarity, a popularity baseline, a SQLite platform layer, and leave-one-out Recall@K evaluation. Engine in Python (numpy / scipy / scikit-learn); this page is plain HTML/CSS on GitHub Pages.</p>
     </div>
     <p class="fine">Built from scratch by Andrea · one of an ongoing series of learning builds.</p>
   </div>
